@@ -2,29 +2,10 @@
 // Load dependencies
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-// const { stakingRewardVestingAmount30,
-//   stakingRewardVestingAmount60,
-//   stakingRewardVestingAmount90,
-//   seedRoundVestingAmount,
-//   privateRoundVestingAmount,
-//   publicRoundVestingAmount,
-//   teamVestingAmount,
-//   advisorsVestingAmount,
-//   p2eVestingAmount,
-//   ecosystemVestingAmount
-// } = require("../scripts/testData");
-
-let RaceKingdom;
-let RKVesting;
-let RKStaking;
-let mainContract;
-let vestingContract;
-let stakingContract;
+const _ = require("lodash");
 
 let NFTContract;
 let NFTFactory;
-let LockupContract;
-let LockupFactory;
 
 const toBigNumberArray = (arr) => {
   const newArr = [];
@@ -39,33 +20,68 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 // Start test block
 describe("Racekingdom", function () {
   beforeEach(async function () {
-    NFTFactory = await ethers.getContractFactory("Lockup");
+    NFTFactory = await ethers.getContractFactory("CheemsXfractional");
     NFTContract = await NFTFactory.deploy();
-
-    // LockupFactory = await ethers.getContractFactory("Lockup");
-    // LockupContract = await LockupFactory.deploy();
   });
 
   // Test case
   it("Basic Token Contract works correctly.", async function () {
-    expect((await NFTContract.symbol()).toString()).to.equal("GIR");
 
     const [owner, addr1, addr2] = await ethers.getSigners();
 
-    // // //mint
-    // // await mainContract.mint(addr1.address, 50);
+    const val = await NFTContract.getAmount(owner.address);
+    console.log("before",val.toString());
 
-    // // //balanceOf
-    // // expect(BigNumber.from(await mainContract.balanceOf(addr1.address))).to.deep.equal(BigNumber.from("50"));
+    let res = await NFTContract.connect(owner).mintNFTWithAvax(owner.address, 9, 
+      "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak", {value: ethers.utils.parseEther("1000")})
+    const tx = await res.wait();
+    // console.log(tx);
+    let result = _.find(tx.events, {event: "Transfer"})
+    const tokenId = result.args["tokenId"].toString();
 
-    // // //transfer
-    // await LockupContract.connect(addr1).approve(LockupContract.address, BigNumber.from("99999999999999999999999999999999999999"));
-    // await LockupContract.connect(owner).approve(LockupContract.address, BigNumber.from("99999999999999999999999999999999999999"));
-    // await LockupContract.connect(addr2).approve(LockupContract.address, BigNumber.from("99999999999999999999999999999999999999"));
-    // await NFTContract.connect(owner).transferOwnership(LockupContract.address);
-    // await LockupContract.connect(owner).stake("unlock", -1, BigNumber.from("499000000000000000000000000000"));
+    const tire = await NFTContract.tierInfo(tokenId);
+    console.log("==========tire=======",tokenId, tire)
+
+    // await NFTContract.connect(owner).transferFrom(NFTContract.address, owner.address, 1);
+    await NFTContract.connect(owner).setUpgradable(true);
+
+    console.log("before mint",await NFTContract.getAmount(owner.address));
+    res = await NFTContract.connect(owner).downgradeNFT(1, 0);
+    res.wait();
+    res = await NFTContract.connect(owner).aggregation(5000, 0);
+    res.wait();
+    res = await NFTContract.connect(owner).fractionalize(7)
+    res = await NFTContract.connect(owner).upgradeNFTByAvax(3, 4, {value: ethers.utils.parseEther("35")})
+
+    await NFTContract.connect(owner).mintNFTWithAvax(owner.address, 9, 
+      "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak", {value: ethers.utils.parseEther("1000")})
+    await NFTContract.connect(owner).mintNFTWithAvax(owner.address, 7, 
+        "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak", {value: ethers.utils.parseEther("100")})
+    // let tx1 = await res.wait();
+    // result = _.find(tx1.events, {event: "UpgradeNFTByAvax"})
+    // console.log(result);
+    for (let i = 0; i < 10; i++) {
+      let len = await(await NFTContract.getLen(owner.address, i)).toString();
+      let str = "";
+      let res = (await NFTContract.getInfo(owner.address, i));
+      console.log(i, res)
+    }
+
     
-    // expect(BigNumber.from(await mainContract.balanceOf(addr2.address))).to.deep.equal(BigNumber.from("50"));
+
+    // console.log("tier1: ",(await NFTContract.getLen(owner.address, 0)).toString())
+    // console.log("tier2: ",(await NFTContract.getLen(owner.address, 1)).toString())
+    // console.log("tier3: ",(await NFTContract.getLen(owner.address, 2)).toString())
+    // console.log("tier4: ",(await NFTContract.getLen(owner.address, 3)).toString())
+    // console.log("tier5: ",(await NFTContract.getLen(owner.address, 4)).toString())
+    // console.log("tier6: ",(await NFTContract.getLen(owner.address, 5)).toString())
+    // console.log("tier7: ",(await NFTContract.getLen(owner.address, 6)).toString())
+    // console.log("tier8: ",(await NFTContract.getLen(owner.address, 7)).toString())
+    // console.log("tier9: ",(await NFTContract.getLen(owner.address, 8)).toString())
+    // console.log("tier10: ",(await NFTContract.getLen(owner.address, 9)).toString())
+    console.log("tier0: ",(await NFTContract.getLen(owner.address, 10)).toString())
+
+    console.log("after mint",await NFTContract.getAmount(owner.address));
   });
 
 //   it("Vesting and Staking contracts are working correctly.", async function () {
