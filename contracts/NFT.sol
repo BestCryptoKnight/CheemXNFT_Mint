@@ -484,11 +484,11 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     string[11] public defaultURI;
     address public currencyToken; // default 0 means avax
     address treasureWallet = 0xf827c3E5fD68e78aa092245D442398E12988901C;
-    address XYZToken;
+    address XYZToken = 0xb0b598FCd066058a83FEa073d56522b5BaE0522B;
     uint priceDivisor = 1000;
     bool upgradable = false;
 
-    mapping(uint=>uint) public balanceOf;
+    mapping(uint=>uint) public tBalance;
 
     uint8 mintOption = 0;
 
@@ -502,8 +502,8 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     mapping(address => bool) public examptMaxAmountUser;
 
     event UodateURI(address indexed user, bool success);
+    event UpgradeNFTByAvax(address indexed user, uint amount, uint cal);
     
-
     constructor() ERC721("CheemsXfractional NFT", "CXN") {
         max_Regular_tier[0] = 10000;
         max_Regular_tier[1] = 5000;
@@ -556,11 +556,17 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         examptMaxAmountUser[address(this)] = true;
 
         tierInfo[0] = 10;  // tire0 hard coded
+        whiteList[address(this)] = true;
+        whiteList[_msgSender()] = true;
     }
 
     function setMintOption( uint8 option ) public onlyOwner {
         require(option < 3, "invalid option");
         mintOption = option;
+    }
+
+    function setXYZtoken(address token) public onlyOwner {
+        XYZToken = token;
     }
 
     function setWhiteList(address[] memory users, bool flag) public onlyOwner {
@@ -655,13 +661,13 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         }
     }
 
-    function canMint(uint tier, uint amount) private view returns(bool) {
-        if(tier < 10 && (balanceOf[tier] + amount) <= max_Regular_tier[tier] && getMintedTotalAmount() + maxTier0 / max_Regular_tier[tier] * amount <= maxTier0 * 10) return true;
+    function canMint(uint tier, uint amount) public view returns(bool) {
+        if(tier < 10 && (tBalance[tier] + amount) <= max_Regular_tier[tier] && getMintedTotalAmount() + maxTier0 / max_Regular_tier[tier] * amount <= maxTier0 * 10) return true;
         else if(tier == 10 && getMintedTotalAmount() + amount <= maxTier0 * 10) return true;
         return false;
     }
 
-    function getUserTotalAmount(address wallet) private view returns(uint) {   // for test pri
+    function getUserTotalAmount(address wallet) private view returns(uint) {
         uint amount = 0;
         for(uint i = 0; i < 10; i++) {
             uint[] storage nftList = userInfo[wallet].amount[i];
@@ -670,16 +676,16 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         return amount + userInfo[wallet].tier0;
     }
 
-    function getMintedTotalAmount() private view returns(uint) {   // for test pri
+    function getMintedTotalAmount() private view returns(uint) {
         uint amount = 0;
         for(uint i = 0; i <= 10; i++) {
-            uint nftList = balanceOf[i];
+            uint nftList = tBalance[i];
             amount += maxTier0 / max_Regular_tier[i] * nftList;
         }
         return amount;
     }
 
-    function getMaxUserAmount() private view returns(uint) {   // for test pri
+    function getMaxUserAmount() private view returns(uint) {
         uint amount = 0;
         for(uint i = 0; i <= 10; i++) {
             amount += maxWalletLimit[i] * maxTier0 / max_Regular_tier[i];
@@ -688,19 +694,20 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     }
 
     function tier0transfer(address to, uint amount) public {
+        require(_msgSender() != to, "Invalid to");
         _tier0transferFrom(_msgSender(), to, amount);
     }
 
     function _tier0transferFrom(address from, address to, uint amount) private {
         require(userInfo[from].tier0 >= amount, "insufficeint balance");
-        require(canTransfer(to, 0), "exceed max amount2");
+        require(canTransfer(to, 0, amount), "exceed max amount2");
         userInfo[from].tier0 -= amount;
         userInfo[to].tier0 += amount;
         if(from == address(this)) {
-            balanceOf[tierInfo[0]] += amount;
+            tBalance[tierInfo[0]] += amount;
         }
         if( to == address(this) ) {
-            balanceOf[tierInfo[0]] -= amount;
+            tBalance[tierInfo[0]] -= amount;
         }
     }
 
@@ -719,15 +726,15 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
-    function canTransfer(address to, uint tokenId) public view returns(bool) {
+    function canTransfer(address to, uint tokenId, uint amount) public view returns(bool) {
         uint tier = tierInfo[tokenId];
         
         if(examptMaxAmountUser[to] == true) return true;
-        if(examptMaxAmountUser[to] == false && tier == 10 && getUserTotalAmount(to) + 1  <= getMaxUserAmount() ) return true;
+        if(examptMaxAmountUser[to] == false && tier == 10 && getUserTotalAmount(to) + amount  <= getMaxUserAmount() ) return true;
         else if(tier == 10) return false;
         uint normalTierLen = userInfo[to].amount[tier].length;
         if(examptMaxAmountUser[to] == false && 
-            tier < 10 && (normalTierLen + 1) <= maxWalletLimit[tier] && 
+            tier < 10 && (normalTierLen + amount) <= maxWalletLimit[tier] && 
             getUserTotalAmount(to) + maxTier0 / max_Regular_tier[tier]  <= getMaxUserAmount() ) return true;
         
         return false;
@@ -736,7 +743,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     function transferNFT(address from, address to, uint tokenId) private {
         uint[] storage fromTokenList = userInfo[from].amount[tierInfo[tokenId]];
         uint[] storage toTokenList = userInfo[to].amount[tierInfo[tokenId]];
-        require(canTransfer(to, tokenId), "exceed max amount1");
+        require(canTransfer(to, tokenId, 1), "exceed max amount1");
 
         bool flag = false;
         for(uint i = 0; i < fromTokenList.length; i++) {
@@ -750,10 +757,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         require(flag, "from has no tokenId");
         toTokenList.push(tokenId);
         if(from == address(this)) {
-            balanceOf[tierInfo[tokenId]]++;
+            tBalance[tierInfo[tokenId]]++;
         }
         if( to == address(this) ) {
-            balanceOf[tierInfo[tokenId]]--;
+            tBalance[tierInfo[tokenId]]--;
         }
     }
 
@@ -771,8 +778,6 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         }
         _tier0transferFrom(address(this), _msgSender(), tier0From - tier0To);
     }
-
-    event UpgradeNFTByAvax(address indexed user, uint amount, uint cal);
 
     function upgradeNFTByAvax(uint nftId, uint tierGroup) public payable {
         require(upgradable, "no permission");
@@ -826,6 +831,21 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         _tier0transferFrom(address(this), _msgSender(), amount);
     }
 
+    function exchangeXYZAndTiero(uint amount, bool buyTier0) public {
+        if(buyTier0) {
+            if(userInfo[address(this)].tier0 < amount) {
+                require(canMint(10, amount), "limit mint");
+                userInfo[address(this)].tier0 = amount;
+            }
+            IERC20(XYZToken).transferFrom(_msgSender(), address(this), amount * 10 ** IERC20Metadata(XYZToken).decimals());
+            _tier0transferFrom(address(this), _msgSender(), amount);
+        } else {
+            _tier0transferFrom(_msgSender(),address(this), amount);
+            IERC20(XYZToken).transfer(_msgSender(), amount * 10 ** IERC20Metadata(XYZToken).decimals());
+        }
+        
+    }
+
     function onERC721Received(
         address,
         address,
@@ -836,17 +856,17 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     }
 
 
-    function getAmount(address user) public view returns(uint) {  // for test
-        return user.balance;
-    }
+    // function getAmount(address user) public view returns(uint) {  // for test
+    //     return user.balance;
+    // }
 
-    function getLen(address user, uint tire) public view returns(uint) { // for test
-        if(tire == 10) return userInfo[user].tier0;
-        return userInfo[user].amount[tire].length;
-    }
+    // function getLen(address user, uint tire) public view returns(uint) { // for test
+    //     if(tire == 10) return userInfo[user].tier0;
+    //     return userInfo[user].amount[tire].length;
+    // }
 
-    function getInfo(address user, uint tier) public view returns(uint[] memory res) {
-        res = userInfo[user].amount[tier];
-        return res;
-    }
+    // function getInfo(address user, uint tier) public view returns(uint[] memory res) {
+    //     res = userInfo[user].amount[tier];
+    //     return res;
+    // }
 }
