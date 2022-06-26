@@ -105,6 +105,23 @@ library Address {
     }
 }
 
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+interface IERC20Metadata is IERC20 {
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
+}
+
 interface IERC721Receiver {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external returns (bytes4);
 }
@@ -462,18 +479,24 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     Counters.Counter private _tokenIds;
     uint[10] public max_Regular_tier;
     uint public maxTier0 = 10_000_000;
-    uint[10] public price;
+    uint[11] public price;
     uint[10] public maxWalletLimit;
     string[10] public defaultURI;
-    address currencyToken; // default 0 means avax
+    address public currencyToken; // default 0 means avax
+    address treasureWallet = 0xf827c3E5fD68e78aa092245D442398E12988901C;
+
+    mapping(uint=>uint[]) public balanceOf;
 
     uint8 mintOption = 0;
 
     struct UserNFTInfo {
-        mapping(uint=>uint) amount;
+        mapping(uint=>uint[]) amount;
     }
 
     mapping(address => bool) public whiteList;
+    mapping(address => UserNFTInfo) userInfo;
+    mapping(uint => uint) public tierInfo;
+    mapping(address => bool) public examptMaxAmountUser;
 
     event UodateURI(address indexed user, bool success);
     
@@ -490,16 +513,17 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         max_Regular_tier[8] = 20;
         max_Regular_tier[9] = 10;
 
-        price[0] = 5;
-        price[1] = 10;
-        price[2] = 20;
-        price[3] = 30;
-        price[4] = 40;
-        price[5] = 50;
-        price[6] = 80;
-        price[7] = 100;
-        price[8] = 500;
-        price[9] = 1000;
+        price[0] = 5 * 1000;
+        price[1] = 10 * 1000;
+        price[2] = 20 * 1000;
+        price[3] = 30 * 1000;
+        price[4] = 40 * 1000;
+        price[5] = 50 * 1000;
+        price[6] = 80 * 1000;
+        price[7] = 100 * 1000;
+        price[8] = 500 * 1000;
+        price[9] = 1000 * 1000;
+        price[10] = 5;
 
         maxWalletLimit[0] = 100;
         maxWalletLimit[1] = 50;
@@ -522,6 +546,8 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         defaultURI[7] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
         defaultURI[8] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
         defaultURI[9] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
+
+        examptMaxAmountUser[address(this)] = true;
     }
 
     function setMintOption( uint8 option ) public onlyOwner {
@@ -552,9 +578,131 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         return false;
         
     }
-    
-    function createToken(address recipient, uint8 tie, uint256 amount) public onlyOwner returns (uint256) {
 
+    function setNFTmintCurrency(address token) public onlyOwner {
+        currencyToken = token;
+    }
+
+    function setTreasureWallet(address wallet) public onlyOwner {
+        treasureWallet = wallet;
+    }
+
+    function sendAllBalance(address token) public onlyOwner {
+        IERC20(token).transfer(treasureWallet, IERC20(token).balanceOf(address(this)));
+    }
+
+    function setExamptMaxAmountUser(address user, bool flag) public onlyOwner {
+        examptMaxAmountUser[user] = flag;
+    }
+
+    receive() external payable { }
+    function mintNFTWithAvax(address wallet, uint tie, string memory uri) public payable { 
+        require(currencyToken == address(0), "invalid Currency0");
+        require(tie < 20, "invalid tie");
+        uint amount = price[tie];
+        require(msg.value == amount * 10 ** 18 / 1000);
+        mintNFT(wallet, tie, uri);
+    }
+
+    function mintNFTWithToken(address wallet, uint tie, string memory uri) public {
+        require(currencyToken != address(0), "invalid Currency1");
+        require(tie < 20, "invalid tie");
+        uint amount = price[tie];
+        IERC20(currencyToken).transferFrom(_msgSender(), address(this), amount * 10 ** IERC20Metadata(currencyToken).decimals() / 1000);
+        mintNFT(wallet, tie, uri);
+    }
+    
+    function mintNFT(address wallet, uint tier, string memory uri) private {
+        if((owner() == msg.sender && mintOption == 0) ||
+           (whiteList[msg.sender] && mintOption == 1) || 
+           (mintOption == 2) ) {
+            if(tier < 10) {      // mint for tier1-10
+                uint tokenId;
+                uint[] storage nftList = userInfo[address(this)].amount[tier];
+                if(nftList.length > 0) {
+                    tokenId = nftList[nftList.length - 1];
+                } else {
+                    require((balanceOf[tier].length + 1) * max_Regular_tier[tier] + balanceOf[tier + 10].length <= maxTier0, "limit amount");
+                    _tokenIds.increment();
+                    tokenId = _tokenIds.current();
+                    _safeMint(address(this), tokenId);
+                    tierInfo[tokenId] = tier;
+                    nftList.push(tokenId);
+                    balanceOf[tier].push(tokenId);
+                }
+                safeTransferFrom(address(this), wallet, tokenId);
+                _setTokenURI(tokenId, uri);
+            } else {            // mint for tier0
+                uint tokenId;
+                uint[] storage nftList = userInfo[address(this)].amount[tier];
+                if(nftList.length > 0) {
+                    tokenId = nftList[nftList.length - 1];
+                } else {
+                    require(balanceOf[tier].length * max_Regular_tier[tier] + balanceOf[tier + 10].length + 1 <= maxTier0, "limit amount");
+                    _tokenIds.increment();
+                    tokenId = _tokenIds.current();
+                    _safeMint(address(this), tokenId);
+                    tierInfo[tokenId] = tier;
+                    nftList.push(tokenId);
+                    balanceOf[tier].push(tokenId);
+                }
+                safeTransferFrom(address(this), wallet, tokenId);
+                _setTokenURI(tokenId, uri);
+            }
+            
+        } else {
+            require(false, "invalid Option");
+        }
+    }
+
+    function transferFrom (address from, address to, uint tokenId) public override {
+        super.transferFrom(from, to, tokenId);
+        transferNFT(from, to, tokenId);
+    }
+
+    function safeTransferFrom (address from, address to, uint tokenId) public override {
+        super.safeTransferFrom(from, to, tokenId);
+        transferNFT(from, to, tokenId);
+    }
+
+    function safeTransferFrom (address from, address to, uint256 tokenId, bytes memory _data) public override {
+        super.safeTransferFrom(from, to, tokenId, _data);
+        transferNFT(from, to, tokenId);
+    }
+
+    function canTransfer(address to, uint tokenId) public view returns(bool) {
+        uint tie = tierInfo[tokenId];
+        
+        if(examptMaxAmountUser[to] == true) return true;
+        if(tie < 10) {
+            uint normalTierLen = userInfo[to].amount[tie].length;
+            uint tire0Len = userInfo[to].amount[tie + 10].length;
+            if(examptMaxAmountUser[to] == false && (normalTierLen + 1) * max_Regular_tier[tie] + tire0Len <= maxWalletLimit[tie] * max_Regular_tier[tie]) return true;
+        } else {
+            uint tire0Len = userInfo[to].amount[tie].length;
+            uint normalTierLen = userInfo[to].amount[tie - 10].length;
+            if(examptMaxAmountUser[to] == false && normalTierLen * max_Regular_tier[tie] + tire0Len + 1 <= maxWalletLimit[tie] * max_Regular_tier[tie]) return true;
+        }
+        
+        return false;
+    }
+
+    function transferNFT(address from, address to, uint tokenId) private {
+        uint[] storage fromTokenList = userInfo[from].amount[tierInfo[tokenId]];
+        uint[] storage toTokenList = userInfo[to].amount[tierInfo[tokenId]];
+        require(canTransfer(to, tokenId), "exceed max amount");
+
+        bool flag = false;
+        for(uint i = 0; i < fromTokenList.length; i++) {
+            if(tokenId == fromTokenList[i]) {
+                fromTokenList[i] = fromTokenList[fromTokenList.length - 1];
+                fromTokenList.pop();
+                flag = true;
+                return;
+            }
+        }
+        require(flag, "from has no tokenId");
+        toTokenList.push(tokenId);
     }
 
     function burnToken(address recipient, uint tie, uint256 tokenId) public onlyOwner  {
