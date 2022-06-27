@@ -499,7 +499,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     }
     mapping(address => UserInfo) public userInfo;
     mapping(uint => uint) public tierInfo;
-    mapping(address => bool) public examptMaxAmountUser;
+    mapping(address => bool) public exemptMaxAmountUser;
 
     event UodateURI(address indexed user, bool success);
     event UpgradeNFTByAvax(address indexed user, uint amount, uint cal);
@@ -515,7 +515,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         max_Regular_tier[7] = 100;
         max_Regular_tier[8] = 20;
         max_Regular_tier[9] = 10;
-        max_Regular_tier[10] = 10000000;
+        max_Regular_tier[10] = maxTier0;
 
         price[0] = 5 * 1000;
         price[1] = 10 * 1000;
@@ -553,11 +553,37 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         defaultURI[9] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
         defaultURI[10] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
 
-        examptMaxAmountUser[address(this)] = true;
+        exemptMaxAmountUser[address(this)] = true;
 
         tierInfo[0] = 10;  // tire0 hard coded
         whiteList[address(this)] = true;
         whiteList[_msgSender()] = true;
+    }
+
+    function setMaxTier0 (uint amount) public onlyOwner {
+        maxTier0 = amount;
+        max_Regular_tier[10] = amount;
+    }
+
+    function setPriceList (uint[] memory vals) public onlyOwner {
+        require(vals.length == 10, "invalid input");
+        for(uint i = 0; i < vals.length; i++) {
+            price[i] = vals[i];
+        }
+    }
+
+    function setMaxWalletAmountList(uint[] memory vals) public onlyOwner {
+        require(vals.length == 10, "invalid input");
+        for(uint i = 0; i < vals.length; i++) {
+            maxWalletLimit[i] = vals[i];
+        }
+    }
+
+    function setMaxRegularTier(uint[] memory vals) public onlyOwner {
+        require(vals.length == 10, "invalid input");
+        for(uint i = 0; i < vals.length; i++) {
+            max_Regular_tier[i] = vals[i];
+        }
     }
 
     function setMintOption( uint8 option ) public onlyOwner {
@@ -609,8 +635,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         payable(treasureWallet).transfer(address(this).balance);
     }
 
-    function setExamptMaxAmountUser(address user, bool flag) public onlyOwner {
-        examptMaxAmountUser[user] = flag;
+    function setExemptMaxAmountUser(address[] memory user, bool flag) public onlyOwner {
+        for(uint i = 0; i < user.length; i++) {
+            exemptMaxAmountUser[user[i]] = flag;
+        }
     }
 
     receive() external payable { }
@@ -729,11 +757,11 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     function canTransfer(address to, uint tokenId, uint amount) public view returns(bool) {
         uint tier = tierInfo[tokenId];
         
-        if(examptMaxAmountUser[to] == true) return true;
-        if(examptMaxAmountUser[to] == false && tier == 10 && getUserTotalAmount(to) + amount  <= getMaxUserAmount() ) return true;
+        if(exemptMaxAmountUser[to] == true) return true;
+        if(exemptMaxAmountUser[to] == false && tier == 10 && getUserTotalAmount(to) + amount  <= getMaxUserAmount() ) return true;
         else if(tier == 10) return false;
         uint normalTierLen = userInfo[to].amount[tier].length;
-        if(examptMaxAmountUser[to] == false && 
+        if(exemptMaxAmountUser[to] == false && 
             tier < 10 && (normalTierLen + amount) <= maxWalletLimit[tier] && 
             getUserTotalAmount(to) + maxTier0 / max_Regular_tier[tier]  <= getMaxUserAmount() ) return true;
         
