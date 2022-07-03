@@ -50,14 +50,16 @@ describe('Racekingdom', function () {
 
     await CheemsXYZContract.connect(owner).transfer(NFTContract.address, (await CheemsXYZContract.totalSupply()).div(2));
 
-    const val = await NFTContract.getAmount(owner.address)
-    console.log('before', val.toString())
+    // const val = await NFTContract.getAmount(owner.address)
+    // console.log('before', val.toString())
+
+    await NFTContract.connect(owner).setPriceList([1,1,2,3,4,5,6,7,8,9]);
 
     let res = await NFTContract.connect(owner).mintNFTWithAvax(
       owner.address,
-      9,
+      0,
       'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
+      { value: ethers.utils.parseEther('0.001') },
     )
     const tx = await res.wait()
     // console.log(tx);
@@ -65,6 +67,12 @@ describe('Racekingdom', function () {
     const tokenId = result.args['tokenId'].toString()
 
     const tire = await NFTContract.tierInfo(tokenId)
+    await NFTContract.connect(owner).mintNFTWithAvax(
+      owner.address,
+      0,
+      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+      { value: ethers.utils.parseEther('0.001') },
+    )
     console.log('==========tire=======', tokenId, tire)
 
     // await NFTContract.connect(owner).transferFrom(NFTContract.address, owner.address, 1);
@@ -86,130 +94,130 @@ describe('Racekingdom', function () {
       true,
     )
 
-    console.log('before mint', await NFTContract.getAmount(owner.address))
-    res = await NFTContract.connect(owner).downgradeNFT(1, 0)
-    res.wait()
-    res = await NFTContract.connect(owner).aggregation(5000, 0)
-    res.wait()
-    res = await NFTContract.connect(owner).fractionalize(7)
-    res = await NFTContract.connect(owner).upgradeNFTByAvax(3, 6, {
-      value: ethers.utils.parseEther('75'),
-    })
+    // console.log('before mint', await NFTContract.getAmount(owner.address))
+    // res = await NFTContract.connect(owner).downgradeNFT(1, 0)
+    // res.wait()
+    // res = await NFTContract.connect(owner).aggregation(5000, 0)
+    // res.wait()
+    // res = await NFTContract.connect(owner).fractionalize(7)
+    // res = await NFTContract.connect(owner).upgradeNFTByAvax(3, 6, {
+    //   value: ethers.utils.parseEther('75'),
+    // })
 
-    await NFTContract.connect(owner).mintNFTWithAvax(
-      owner.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(owner).mintNFTWithAvax(
-      owner.address,
-      7,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('100') },
-    )
+    // await NFTContract.connect(owner).mintNFTWithAvax(
+    //   owner.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(owner).mintNFTWithAvax(
+    //   owner.address,
+    //   7,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('100') },
+    // )
 
-    await NFTContract.connect(owner).transferFrom(
-      owner.address,
-      addr1.address,
-      1,
-    )
-    await NFTContract.connect(owner).tier0transfer(addr1.address, 500000)
+    // await NFTContract.connect(owner).transferFrom(
+    //   owner.address,
+    //   addr1.address,
+    //   1,
+    // )
+    // await NFTContract.connect(owner).tier0transfer(addr1.address, 500000)
 
-    await NFTContract.connect(addr1).mintNFTWithAvax(
-      addr1.address,
-      8,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('500') },
-    )
-    await NFTContract.connect(addr2).mintNFTWithAvax(
-      addr2.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(addr3).mintNFTWithAvax(
-      addr3.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(addr4).mintNFTWithAvax(
-      addr4.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(addr5).mintNFTWithAvax(
-      addr5.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(addr6).mintNFTWithAvax(
-      addr6.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(addr7).mintNFTWithAvax(
-      addr7.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(addr8).mintNFTWithAvax(
-      addr8.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(addr9).mintNFTWithAvax(
-      addr9.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
-    await NFTContract.connect(owner).mintNFTWithAvax(
-      owner.address,
-      9,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1000') },
-    )
+    // await NFTContract.connect(addr1).mintNFTWithAvax(
+    //   addr1.address,
+    //   8,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('500') },
+    // )
+    // await NFTContract.connect(addr2).mintNFTWithAvax(
+    //   addr2.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(addr3).mintNFTWithAvax(
+    //   addr3.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(addr4).mintNFTWithAvax(
+    //   addr4.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(addr5).mintNFTWithAvax(
+    //   addr5.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(addr6).mintNFTWithAvax(
+    //   addr6.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(addr7).mintNFTWithAvax(
+    //   addr7.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(addr8).mintNFTWithAvax(
+    //   addr8.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(addr9).mintNFTWithAvax(
+    //   addr9.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
+    // await NFTContract.connect(owner).mintNFTWithAvax(
+    //   owner.address,
+    //   9,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('1000') },
+    // )
 
-    await NFTContract.connect(addr8).mintNFTWithAvax(
-      addr8.address,
-      8,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('500') },
-    )
+    // await NFTContract.connect(addr8).mintNFTWithAvax(
+    //   addr8.address,
+    //   8,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('500') },
+    // )
 
-    await NFTContract.connect(addr10).mintNFTWithAvax(
-      addr10.address,
-      8,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('500') },
-    )
+    // await NFTContract.connect(addr10).mintNFTWithAvax(
+    //   addr10.address,
+    //   8,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('500') },
+    // )
 
-    await NFTContract.connect(addr9).mintNFTWithAvax(
-      addr9.address,
-      8,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('500') },
-    )
+    // await NFTContract.connect(addr9).mintNFTWithAvax(
+    //   addr9.address,
+    //   8,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('500') },
+    // )
 
-    await NFTContract.connect(owner).fractionalize(
-      9
-    )
+    // await NFTContract.connect(owner).fractionalize(
+    //   9
+    // )
 
-    await NFTContract.connect(owner).mintNFTWithAvax(
-      owner.address,
-      7,
-      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('100') },
-    )
+    // await NFTContract.connect(owner).mintNFTWithAvax(
+    //   owner.address,
+    //   7,
+    //   'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+    //   { value: ethers.utils.parseEther('100') },
+    // )
 
-    console.log(await NFTContract.tBalance(9), await NFTContract.tBalance(10), await NFTContract.getMintedTotalAmount());
+    // console.log(await NFTContract.tBalance(9), await NFTContract.tBalance(10), await NFTContract.getMintedTotalAmount());
     // let tx1 = await res.wait();
     // result = _.find(tx1.events, {event: "UpgradeNFTByAvax"})
     // console.log(result);
@@ -225,13 +233,13 @@ describe('Racekingdom', function () {
       (await NFTContract.getLen(owner.address, 10)).toString(),
     )
     console.log(await CheemsXYZContract.balanceOf(owner.address), await CheemsXYZContract.balanceOf(NFTContract.address));
-    await CheemsXYZContract.connect(owner).approve(NFTContract.address, BigNumber.from("50000000000000000000000000"));
-    console.log('after mint', await NFTContract.getAmount(owner.address))
-    await NFTContract.connect(owner).exchangeXYZAndTiero(600000, false);
-    console.log(await CheemsXYZContract.connect(owner).balanceOf(owner.address));
-    console.log(
-      'tier0: ',
-      (await NFTContract.getUserTotalAmount(owner.address)).toString(),
-    )
+    // await CheemsXYZContract.connect(owner).approve(NFTContract.address, BigNumber.from("50000000000000000000000000"));
+    // console.log('after mint', await NFTContract.getAmount(owner.address))
+    // await NFTContract.connect(owner).exchangeXYZAndTiero(600000, false);
+    // console.log(await CheemsXYZContract.connect(owner).balanceOf(owner.address));
+    // console.log(
+    //   'tier0: ',
+    //   (await NFTContract.getUserTotalAmount(owner.address)).toString(),
+    // )
   })
 })

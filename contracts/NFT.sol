@@ -1,3 +1,11 @@
+/**
+ *Submitted for verification at testnet.snowtrace.io on 2022-06-29
+*/
+
+/**
+ *Submitted for verification at testnet.snowtrace.io on 2022-06-28
+*/
+
 // contracts/NFT.sol
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.0;
@@ -485,12 +493,12 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     address public currencyToken; // default 0 means avax
     address treasureWallet = 0xf827c3E5fD68e78aa092245D442398E12988901C;
     address XYZToken = 0xb0b598FCd066058a83FEa073d56522b5BaE0522B;
-    uint priceDivisor = 1000;
+    uint priceDivisor = 100000;
     bool upgradable = false;
 
     mapping(uint=>uint) public tBalance;
 
-    uint8 mintOption = 0;
+    uint8 public mintOption = 0;
 
     mapping(address => bool) public whiteList;
     struct UserInfo {
@@ -505,53 +513,41 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     event UpgradeNFTByAvax(address indexed user, uint amount, uint cal);
     
     constructor() ERC721("CheemsXfractional NFT", "CXN") {
-        max_Regular_tier[0] = 10000;
-        max_Regular_tier[1] = 5000;
-        max_Regular_tier[2] = 2500;
-        max_Regular_tier[3] = 1600;
-        max_Regular_tier[4] = 500;
-        max_Regular_tier[5] = 400;
-        max_Regular_tier[6] = 200;
-        max_Regular_tier[7] = 100;
-        max_Regular_tier[8] = 20;
-        max_Regular_tier[9] = 10;
+        max_Regular_tier[0] = 1000;
+        max_Regular_tier[1] = 500;
+        max_Regular_tier[2] = 250;
+        max_Regular_tier[3] = 160;
+        max_Regular_tier[4] = 120;
+        max_Regular_tier[5] = 50;
+        max_Regular_tier[6] = 30;
+        max_Regular_tier[7] = 15;
+        max_Regular_tier[8] = 7;
+        max_Regular_tier[9] = 3;
         max_Regular_tier[10] = maxTier0;
 
-        price[0] = 5 * 1000;
-        price[1] = 10 * 1000;
-        price[2] = 20 * 1000;
-        price[3] = 30 * 1000;
-        price[4] = 40 * 1000;
-        price[5] = 50 * 1000;
-        price[6] = 80 * 1000;
-        price[7] = 100 * 1000;
-        price[8] = 500 * 1000;
-        price[9] = 1000 * 1000;
-        price[10] = 5;
+        price[0] = 1 * priceDivisor;
+        price[1] = 2 * priceDivisor;
+        price[2] = 3 * priceDivisor;
+        price[3] = 4 * priceDivisor;
+        price[4] = 10 * priceDivisor;
+        price[5] = 20 * priceDivisor;
+        price[6] = 30 * priceDivisor;
+        price[7] = 50 * priceDivisor;
+        price[8] = 80 * priceDivisor;
+        price[9] = 100 * priceDivisor;
+        price[10] = 1;
 
-        maxWalletLimit[0] = 100;
-        maxWalletLimit[1] = 50;
-        maxWalletLimit[2] = 25;
-        maxWalletLimit[3] = 16;
-        maxWalletLimit[4] = 5;
-        maxWalletLimit[5] = 4;
-        maxWalletLimit[6] = 2;
+        maxWalletLimit[0] = 10;
+        maxWalletLimit[1] = 5;
+        maxWalletLimit[2] = 2;
+        maxWalletLimit[3] = 2;
+        maxWalletLimit[4] = 1;
+        maxWalletLimit[5] = 1;
+        maxWalletLimit[6] = 1;
         maxWalletLimit[7] = 1;
         maxWalletLimit[8] = 1;
         maxWalletLimit[9] = 1;
         maxWalletLimit[10] = 0;
-
-        defaultURI[0] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
-        defaultURI[1] = "https://gateway.pinata.cloud/ipfs/QmXZYdzV8tvwqcCoxaLbUWaGtpaFqZ5SMyLATb7gJQvNqW";
-        defaultURI[2] = "https://gateway.pinata.cloud/ipfs/QmZxJJaE52r81oWskh66tayeuzArtEeL3bC1Y9mtFKRmZd";
-        defaultURI[3] = "https://gateway.pinata.cloud/ipfs/QmQdK9a64aK7yuEnMuivHywmwS9EbSQT2o8TxNxwyPQFtP";
-        defaultURI[4] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
-        defaultURI[5] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
-        defaultURI[6] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
-        defaultURI[7] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
-        defaultURI[8] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
-        defaultURI[9] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
-        defaultURI[10] = "https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak";
 
         exemptMaxAmountUser[address(this)] = true;
 
@@ -570,6 +566,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         for(uint i = 0; i < vals.length; i++) {
             price[i] = vals[i];
         }
+    }
+
+    function setDefaultPrice(uint val) public onlyOwner {
+        price[10] = val;
     }
 
     function setMaxWalletAmountList(uint[] memory vals) public onlyOwner {
@@ -825,7 +825,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         require(currencyToken != address(0), "invalid Currency0");
         uint tier = tierInfo[nftId];
         uint amount = price[tier];
-        IERC20(currencyToken).transferFrom(_msgSender(), address(this), amount * 10 ** IERC20Metadata(currencyToken).decimals() / priceDivisor / (maxTier0 / max_Regular_tier[tier]));
+        IERC20(currencyToken).transferFrom(_msgSender(), address(this), amount * 10 ** IERC20Metadata(currencyToken).decimals() / priceDivisor);
         
         require(tier < 10 && tierGroup < 10 && tierGroup > tier, "invalid tier");
         transferFrom(_msgSender(), address(this), nftId);
@@ -879,22 +879,17 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         address,
         uint256,
         bytes memory
-    ) public virtual returns (bytes4) {
+    ) external virtual returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
+    function getLen(address user, uint tire) public view returns(uint) { // for test
+        if(tire == 10) return userInfo[user].tier0;
+        return userInfo[user].amount[tire].length;
+    }
 
-    // function getAmount(address user) public view returns(uint) {  // for test
-    //     return user.balance;
-    // }
-
-    // function getLen(address user, uint tire) public view returns(uint) { // for test
-    //     if(tire == 10) return userInfo[user].tier0;
-    //     return userInfo[user].amount[tire].length;
-    // }
-
-    // function getInfo(address user, uint tier) public view returns(uint[] memory res) {
-    //     res = userInfo[user].amount[tier];
-    //     return res;
-    // }
+    function getInfo(address user, uint tier) public view returns(uint[] memory res) {
+        res = userInfo[user].amount[tier];
+        return res;
+    }
 }
