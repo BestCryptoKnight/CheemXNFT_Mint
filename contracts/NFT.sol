@@ -495,6 +495,11 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     address XYZToken = 0xb0b598FCd066058a83FEa073d56522b5BaE0522B;
     uint priceDivisor = 100000;
     bool upgradable = false;
+    uint swapFee = 100;
+
+    uint8 REGULAR_TIER = 0;
+    uint8 WALLETLIMIT = 1;
+    uint8 PRICE = 2;
 
     mapping(uint=>uint) public tBalance;
 
@@ -561,28 +566,22 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         max_Regular_tier[10] = amount;
     }
 
-    function setPriceList (uint[] memory vals) public onlyOwner {
-        require(vals.length == 10, "invalid input");
-        for(uint i = 0; i < vals.length; i++) {
-            price[i] = vals[i];
-        }
-    }
-
-    function setDefaultPrice(uint val) public onlyOwner {
-        price[10] = val;
-    }
-
-    function setMaxWalletAmountList(uint[] memory vals) public onlyOwner {
-        require(vals.length == 10, "invalid input");
-        for(uint i = 0; i < vals.length; i++) {
-            maxWalletLimit[i] = vals[i];
-        }
-    }
-
-    function setMaxRegularTier(uint[] memory vals) public onlyOwner {
-        require(vals.length == 10, "invalid input");
-        for(uint i = 0; i < vals.length; i++) {
-            max_Regular_tier[i] = vals[i];
+    function setListConfig(uint[] memory vals, uint8 conf) public onlyOwner {
+        if(conf == REGULAR_TIER) {
+            require(vals.length == 10, "invalid input");
+            for(uint i = 0; i < vals.length; i++) {
+                max_Regular_tier[i] = vals[i];
+            }
+        } else if(conf == WALLETLIMIT) {
+            require(vals.length == 10, "invalid input");
+            for(uint i = 0; i < vals.length; i++) {
+                maxWalletLimit[i] = vals[i];
+            }
+        } else {
+            require(vals.length == 11, "invalid input");
+            for(uint i = 0; i < vals.length; i++) {
+                price[i] = vals[i];
+            }
         }
     }
 
@@ -641,10 +640,13 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         }
     }
 
+    function setSwapFee(uint fee) public onlyOwner {
+        swapFee = fee;
+    } 
+
     receive() external payable { }
     function mintNFTWithAvax(address wallet, uint tie, string memory uri) public payable { 
         require(currencyToken == address(0), "invalid Currency0");
-        require(tie < 11, "invalid tie");
         uint amount = price[tie];
         require(msg.value == amount * 10 ** 18 / priceDivisor, "not eq value");
         mintNFT(wallet, tie, uri);
@@ -652,13 +654,13 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
 
     function mintNFTWithToken(address wallet, uint tie, string memory uri) public {
         require(currencyToken != address(0), "invalid Currency1");
-        require(tie < 11, "invalid tie");
         uint amount = price[tie];
         IERC20(currencyToken).transferFrom(_msgSender(), address(this), amount * 10 ** IERC20Metadata(currencyToken).decimals() / priceDivisor);
         mintNFT(wallet, tie, uri);
     }
     
     function mintNFT(address wallet, uint tier, string memory uri) private {
+        require(tier < 11, "invalid tie");
         if((owner() == msg.sender && mintOption == 0) ||
            (whiteList[msg.sender] && mintOption == 1) || 
            (mintOption == 2) ) {
@@ -837,7 +839,6 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     }
 
     function aggregation(uint amount, uint tierGroup) public {
-        require(userInfo[_msgSender()].tier0 >= amount, "Insufficient amount");
         require(amount >= maxTier0 / max_Regular_tier[tierGroup], "too small");
         require(tierGroup < 10, "Invalid tier");
         uint _amount = amount / (maxTier0 / max_Regular_tier[tierGroup]) * (maxTier0 / max_Regular_tier[tierGroup]);
@@ -859,7 +860,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         _tier0transferFrom(address(this), _msgSender(), amount);
     }
 
-    function exchangeXYZAndTiero(uint amount, bool buyTier0) public {
+    function exchangeXYZAndTier0(uint amount, bool buyTier0) public {
         if(buyTier0) {
             if(userInfo[address(this)].tier0 < amount) {
                 require(canMint(10, amount), "limit mint");
@@ -891,5 +892,68 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     function getInfo(address user, uint tier) public view returns(uint[] memory res) {
         res = userInfo[user].amount[tier];
         return res;
+    }
+
+    struct BorrowInfo {
+        address user;
+        uint borrowTime;
+    }
+
+    mapping (uint=>BorrowInfo) borrowList;
+    uint[] borrowNFTList;
+    uint borrowFee = 60;
+    uint redeemFee = 10;
+    uint graceFee = 10;
+    uint discountFee = 10;
+    uint holdPeriod = 30 days;
+    uint gracePeriod = 10 days;
+
+    function borrow(uint nftId) public {
+        require(ownerOf(nftId) == _msgSender(), "not owner");
+        uint tire = tierInfo[nftId];
+        uint amount = maxTier0 / max_Regular_tier[tire];
+        transferFrom(_msgSender(), address(this), nftId);
+        _tier0transferFrom(address(this), _msgSender(), amount * borrowFee / 100);
+        borrowList[nftId].user = _msgSender();
+        borrowList[nftId].borrowTime = block.timestamp;
+        borrowNFTList.push(nftId);
+    }
+
+    function redeemNFT(uint nftId, bool isOwner) public {
+        require((isOwner == true && _msgSender() == owner()) || isOwner == false);
+        uint index = 0; bool isExist = false;
+        for(uint i = 0; i < borrowNFTList.length; i++) {
+            if(borrowNFTList[i] == nftId) {
+                borrowNFTList[i] = borrowNFTList[borrowNFTList.length - 1];
+                borrowNFTList.pop();
+                index = i;
+                isExist = true;
+                break;
+            }
+        }
+        require(isExist, "no borrow id");
+        uint period = block.timestamp - borrowList[nftId].borrowTime;
+        require(
+            (period <= holdPeriod + gracePeriod && borrowList[nftId].user == _msgSender()) || 
+            (period > holdPeriod + gracePeriod && borrowList[nftId].user != _msgSender()),
+            "invalid user"
+        );
+        if (isOwner == true) {
+            transferFrom(address(this), treasureWallet, nftId);
+            return;
+        }
+        uint rate;
+        if(period <= holdPeriod + gracePeriod && borrowList[nftId].user == _msgSender()) {
+            if(period <= holdPeriod) rate = borrowFee + redeemFee;
+            else if(period <= holdPeriod + gracePeriod) rate = borrowFee + redeemFee + graceFee;
+            
+        } else {
+            rate = 100 - discountFee;
+        }
+        
+        uint tire = tierInfo[nftId];
+        uint amount = maxTier0 / max_Regular_tier[tire];
+        _tier0transferFrom(_msgSender(), address(this), amount * rate / 100);
+        transferFrom(address(this), _msgSender(), nftId);
     }
 }
