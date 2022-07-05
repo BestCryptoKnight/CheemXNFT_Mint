@@ -862,15 +862,17 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
 
     function exchangeXYZAndTier0(uint amount, bool buyTier0) public {
         if(buyTier0) {
-            if(userInfo[address(this)].tier0 < amount) {
-                require(canMint(10, amount), "limit mint");
-                userInfo[address(this)].tier0 = amount;
+            uint swapAmount = amount * swapFee / 100;
+            require(swapAmount > 0, "too small");
+            if(userInfo[address(this)].tier0 < swapAmount) {
+                require(canMint(10, swapAmount), "limit mint");
+                userInfo[address(this)].tier0 = swapAmount;
             }
             IERC20(XYZToken).transferFrom(_msgSender(), address(this), amount * 10 ** IERC20Metadata(XYZToken).decimals());
-            _tier0transferFrom(address(this), _msgSender(), amount);
+            _tier0transferFrom(address(this), _msgSender(), swapAmount);
         } else {
             _tier0transferFrom(_msgSender(),address(this), amount);
-            IERC20(XYZToken).transfer(_msgSender(), amount * 10 ** IERC20Metadata(XYZToken).decimals());
+            IERC20(XYZToken).transfer(_msgSender(), amount * 10 ** IERC20Metadata(XYZToken).decimals() * swapFee / 100);
         }
         
     }

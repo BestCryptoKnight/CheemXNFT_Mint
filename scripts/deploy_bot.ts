@@ -12,6 +12,7 @@ async function main() {
 
   // The contract is NOT deployed yet; we must wait until it is mined
   await contract.deployed()
+
 }
 
 main()
