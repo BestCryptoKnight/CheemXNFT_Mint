@@ -53,13 +53,13 @@ describe('Racekingdom', function () {
     // const val = await NFTContract.getAmount(owner.address)
     // console.log('before', val.toString())
 
-    await NFTContract.connect(owner).setPriceList([1,1,2,3,4,5,6,7,8,9]);
+    // await NFTContract.connect(owner).setPriceList([1,1,2,3,4,5,6,7,8,9]);
 
     let res = await NFTContract.connect(owner).mintNFTWithAvax(
       owner.address,
-      0,
+      9,
       'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('0.001') },
+      { value: ethers.utils.parseEther('500') },
     )
     const tx = await res.wait()
     // console.log(tx);
@@ -71,7 +71,7 @@ describe('Racekingdom', function () {
       owner.address,
       0,
       'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('0.001') },
+      { value: ethers.utils.parseEther('1') },
     )
     console.log('==========tire=======', tokenId, tire)
 
@@ -94,11 +94,10 @@ describe('Racekingdom', function () {
       true,
     )
 
-    // console.log('before mint', await NFTContract.getAmount(owner.address))
-    // res = await NFTContract.connect(owner).downgradeNFT(1, 0)
-    // res.wait()
-    // res = await NFTContract.connect(owner).aggregation(5000, 0)
-    // res.wait()
+    res = await NFTContract.connect(owner).downgradeNFT(1, 0)
+    res.wait()
+    res = await NFTContract.connect(owner).aggregation(25000000, 0)
+    res.wait()
     // res = await NFTContract.connect(owner).fractionalize(7)
     // res = await NFTContract.connect(owner).upgradeNFTByAvax(3, 6, {
     //   value: ethers.utils.parseEther('75'),

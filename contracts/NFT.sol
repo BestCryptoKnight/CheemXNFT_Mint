@@ -486,14 +486,14 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     uint[11] public max_Regular_tier;
-    uint public maxTier0 = 10_000_000;
+    uint public maxTier0 = 50_000_000_000;
     uint[11] public price;
     uint[11] public maxWalletLimit;
     string[11] public defaultURI;
     address public currencyToken; // default 0 means avax
     address treasureWallet = 0xf827c3E5fD68e78aa092245D442398E12988901C;
     address XYZToken = 0xb0b598FCd066058a83FEa073d56522b5BaE0522B;
-    uint priceDivisor = 100000;
+    uint priceDivisor = 100000000;
     bool upgradable = false;
     uint swapFee = 100;
 
@@ -532,15 +532,15 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
 
         price[0] = 1 * priceDivisor;
         price[1] = 2 * priceDivisor;
-        price[2] = 3 * priceDivisor;
-        price[3] = 4 * priceDivisor;
-        price[4] = 10 * priceDivisor;
-        price[5] = 20 * priceDivisor;
-        price[6] = 30 * priceDivisor;
-        price[7] = 50 * priceDivisor;
-        price[8] = 80 * priceDivisor;
-        price[9] = 100 * priceDivisor;
-        price[10] = 1;
+        price[2] = 4 * priceDivisor;
+        price[3] = 5 * priceDivisor;
+        price[4] = 15 * priceDivisor;
+        price[5] = 18 * priceDivisor;
+        price[6] = 35 * priceDivisor;
+        price[7] = 70 * priceDivisor;
+        price[8] = 300 * priceDivisor;
+        price[9] = 500 * priceDivisor;
+        price[10] = 4;
 
         maxWalletLimit[0] = 10;
         maxWalletLimit[1] = 5;
