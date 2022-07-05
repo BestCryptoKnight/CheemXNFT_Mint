@@ -54,6 +54,23 @@ describe('Racekingdom', function () {
     // console.log('before', val.toString())
 
     // await NFTContract.connect(owner).setPriceList([1,1,2,3,4,5,6,7,8,9]);
+    await NFTContract.connect(owner).setUpgradable(true)
+    await NFTContract.connect(owner).setMintOption(1)
+    await NFTContract.connect(owner).setWhiteList(
+      [
+        addr1.address,
+        addr2.address,
+        addr3.address,
+        addr4.address,
+        addr5.address,
+        addr6.address,
+        addr7.address,
+        addr8.address,
+        addr9.address,
+        addr10.address,
+      ],
+      true,
+    )
 
     let res = await NFTContract.connect(owner).mintNFTWithAvax(
       owner.address,
@@ -74,31 +91,53 @@ describe('Racekingdom', function () {
       { value: ethers.utils.parseEther('1') },
     )
     console.log('==========tire=======', tokenId, tire)
+    await NFTContract.connect(addr1).mintNFTWithAvax(
+      addr1.address,
+      9,
+      'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
+      { value: ethers.utils.parseEther('500') },
+    )
 
     // await NFTContract.connect(owner).transferFrom(NFTContract.address, owner.address, 1);
-    await NFTContract.connect(owner).setUpgradable(true)
-    await NFTContract.connect(owner).setMintOption(1)
-    await NFTContract.connect(owner).setWhiteList(
-      [
-        addr1.address,
-        addr2.address,
-        addr3.address,
-        addr4.address,
-        addr5.address,
-        addr6.address,
-        addr7.address,
-        addr8.address,
-        addr9.address,
-        addr10.address,
-      ],
-      true,
-    )
+
 
     res = await NFTContract.connect(owner).downgradeNFT(1, 0)
     res.wait()
-    res = await NFTContract.connect(owner).aggregation(25000000, 0)
+    res = await NFTContract.connect(owner).aggregation(25000001, 0)
     res.wait()
-    // res = await NFTContract.connect(owner).fractionalize(7)
+
+    res = await NFTContract.connect(addr1).downgradeNFT(3, 0)
+    res.wait()
+    res = await NFTContract.connect(addr1).aggregation(50000000, 0)
+    res.wait()
+
+    console.log(
+      'tier0 of this contract: ',
+      (await NFTContract.getLen(NFTContract.address, 10)).toString(),
+    )
+    // res = await NFTContract.connect(owner).fractionalize(3)
+
+    console.log("tier Id", await NFTContract.tierInfo(6))
+    console.log(
+      'balance of contract',
+      (await NFTContract.getLen(NFTContract.address, 10)).toString(),
+    )
+    console.log(
+      'before borrow: ',
+      (await NFTContract.getLen(owner.address, 10)).toString(),
+    )
+    await NFTContract.connect(owner).borrow(4);
+
+    console.log(
+      'after borrow: ',
+      (await NFTContract.getLen(owner.address, 10)).toString(),
+    )
+    await delay(45000);
+    await NFTContract.connect(owner).redeemNFT(6, true);
+    console.log(
+      'after redeem: ',
+      (await NFTContract.getLen(owner.address, 10)).toString(),
+    )
     // res = await NFTContract.connect(owner).upgradeNFTByAvax(3, 6, {
     //   value: ethers.utils.parseEther('75'),
     // })
@@ -220,18 +259,23 @@ describe('Racekingdom', function () {
     // let tx1 = await res.wait();
     // result = _.find(tx1.events, {event: "UpgradeNFTByAvax"})
     // console.log(result);
-    for (let i = 0; i < 10; i++) {
-      let len = await (await NFTContract.getLen(owner.address, i)).toString()
-      let str = ''
-      let res = await NFTContract.getInfo(owner.address, i)
-      console.log(i, res)
-    }
+    // for (let i = 0; i < 10; i++) {
+    //   let len = await (await NFTContract.getLen(owner.address, i)).toString()
+    //   let str = ''
+    //   let res = await NFTContract.getInfo(owner.address, i)
+    //   console.log(i, res)
+    // }
 
-    console.log(
-      'tier0: ',
-      (await NFTContract.getLen(owner.address, 10)).toString(),
-    )
-    console.log(await CheemsXYZContract.balanceOf(owner.address), await CheemsXYZContract.balanceOf(NFTContract.address));
+    // console.log(
+    //   'tier0: ',
+    //   (await NFTContract.getLen(owner.address, 10)).toString(),
+    // )
+
+    // console.log(
+    //   'tier0 of this contract: ',
+    //   (await NFTContract.getLen(NFTContract.address, 10)).toString(),
+    // )
+    // console.log(await CheemsXYZContract.balanceOf(owner.address), await CheemsXYZContract.balanceOf(NFTContract.address));
     // await CheemsXYZContract.connect(owner).approve(NFTContract.address, BigNumber.from("50000000000000000000000000"));
     // console.log('after mint', await NFTContract.getAmount(owner.address))
     // await NFTContract.connect(owner).exchangeXYZAndTiero(600000, false);

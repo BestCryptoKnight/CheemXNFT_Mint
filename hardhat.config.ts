@@ -72,6 +72,9 @@ const config: HardhatUserConfig = {
     tests: './test',
     artifacts: './build/contracts',
   },
+  mocha: {
+    timeout: 100000000
+  },
   solidity: {
     compilers: [
       {

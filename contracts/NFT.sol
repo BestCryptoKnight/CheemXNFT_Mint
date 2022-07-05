@@ -518,16 +518,16 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     event UpgradeNFTByAvax(address indexed user, uint amount, uint cal);
     
     constructor() ERC721("CheemsXfractional NFT", "CXN") {
-        max_Regular_tier[0] = 1000;
-        max_Regular_tier[1] = 500;
-        max_Regular_tier[2] = 250;
-        max_Regular_tier[3] = 160;
-        max_Regular_tier[4] = 120;
-        max_Regular_tier[5] = 50;
-        max_Regular_tier[6] = 30;
-        max_Regular_tier[7] = 15;
-        max_Regular_tier[8] = 7;
-        max_Regular_tier[9] = 3;
+        max_Regular_tier[0] = 2000;
+        max_Regular_tier[1] = 1000;
+        max_Regular_tier[2] = 500;
+        max_Regular_tier[3] = 320;
+        max_Regular_tier[4] = 100;
+        max_Regular_tier[5] = 80;
+        max_Regular_tier[6] = 40;
+        max_Regular_tier[7] = 20;
+        max_Regular_tier[8] = 4;
+        max_Regular_tier[9] = 2;
         max_Regular_tier[10] = maxTier0;
 
         price[0] = 1 * priceDivisor;
@@ -901,16 +901,17 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         uint borrowTime;
     }
 
-    mapping (uint=>BorrowInfo) borrowList;
-    uint[] borrowNFTList;
+    mapping (uint=>BorrowInfo) public borrowList;
+    uint[] public borrowNFTList;
     uint borrowFee = 60;
     uint redeemFee = 10;
     uint graceFee = 10;
     uint discountFee = 10;
-    uint holdPeriod = 30 days;
-    uint gracePeriod = 10 days;
+    uint holdPeriod = 30 seconds ;
+    uint gracePeriod = 10 seconds;
 
     function borrow(uint nftId) public {
+        require(_msgSender() != owner(), "owner cannot borrow");
         require(ownerOf(nftId) == _msgSender(), "not owner");
         uint tire = tierInfo[nftId];
         uint amount = maxTier0 / max_Regular_tier[tire];
@@ -941,7 +942,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
             "invalid user"
         );
         if (isOwner == true) {
-            transferFrom(address(this), treasureWallet, nftId);
+            IERC721Metadata(address(this)).transferFrom(address(this), treasureWallet, nftId);
             return;
         }
         uint rate;
@@ -952,10 +953,12 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         } else {
             rate = 100 - discountFee;
         }
+
+        delete borrowList[nftId];
         
         uint tire = tierInfo[nftId];
         uint amount = maxTier0 / max_Regular_tier[tire];
         _tier0transferFrom(_msgSender(), address(this), amount * rate / 100);
-        transferFrom(address(this), _msgSender(), nftId);
+        IERC721Metadata(address(this)).transferFrom(address(this), _msgSender(), nftId);
     }
 }
