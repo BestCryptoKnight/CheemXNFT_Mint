@@ -139,6 +139,18 @@ const config: HardhatUserConfig = {
       gasPrice: 20000000000,
       accounts: [process.env.PRIVATE_KEY],
     },
+    avaxTest: {
+      url: 'https://api.avax-test.network/ext/bc/C/rpc',
+      gasPrice: 225000000000,
+      chainId: 43113,
+      accounts: [`${process.env.PRIVATE_KEY}`]
+    },
+    avaxMain: {
+      url: 'https://api.avax.network/ext/bc/C/rpc',
+      gasPrice: 225000000000,
+      chainId: 43114,
+      accounts: [`${process.env.PRIVATE_KEY}`]
+    },
     ganache: {
       chainId: 1337,
       url: 'http://localhost:8545',
@@ -146,8 +158,8 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     //  apiKey: "NURDXE28N6MM9VI216UCSEBZVV5IA7UWSS" // for ether net work
-     apiKey: "N2E5BV7EU18ZEFEMGM8YS5NBPPQH9QJK3Q"
-    // apiKey: "BCT83TFQ1QJ7XPRIVG2V82YVF6SVTRVNDE"
+    //  apiKey: "N2E5BV7EU18ZEFEMGM8YS5NBPPQH9QJK3Q"
+    apiKey: "BCT83TFQ1QJ7XPRIVG2V82YVF6SVTRVNDE"
   },
   typechain: {
     outDir: 'build/types',

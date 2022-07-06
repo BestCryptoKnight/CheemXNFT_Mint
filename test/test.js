@@ -78,7 +78,7 @@ describe('Racekingdom', function () {
       owner.address,
       9,
       'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('500') },
+      { value: ethers.utils.parseEther('500.1') },
     )
     const tx = await res.wait()
     // console.log(tx);
@@ -90,29 +90,30 @@ describe('Racekingdom', function () {
       owner.address,
       0,
       'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('1') },
+      { value: ethers.utils.parseEther('1.1') },
     )
     console.log('==========tire=======', tokenId, tire)
     await NFTContract.connect(addr1).mintNFTWithAvax(
       addr1.address,
       9,
       'https://gateway.pinata.cloud/ipfs/QmaFxL15oSodfwnpJ5exy3sHN6zb6v8wiCxhdL99Lj75Ak',
-      { value: ethers.utils.parseEther('500') },
+      { value: ethers.utils.parseEther('500.1') },
     )
 
     // await NFTContract.connect(owner).transferFrom(NFTContract.address, owner.address, 1);
 
     await NFTContract.connect(owner).setRoyaltyOption(1)
+    await NFTContract.connect(owner).setBorrowable(true);
 
 
-    res = await NFTContract.connect(owner).downgradeNFT(1, 0)
+    res = await NFTContract.connect(owner).downgradeNFT(1, 0, { value: ethers.utils.parseEther('0.1') },)
     res.wait()
-    res = await NFTContract.connect(owner).aggregation(25000001, 0)
+    res = await NFTContract.connect(owner).aggregation(25000001, 0, { value: ethers.utils.parseEther('0.1') })
     res.wait()
 
-    res = await NFTContract.connect(addr1).downgradeNFT(3, 0)
+    res = await NFTContract.connect(addr1).downgradeNFT(3, 0, { value: ethers.utils.parseEther('0.1') })
     res.wait()
-    res = await NFTContract.connect(addr1).aggregation(50000000, 0)
+    res = await NFTContract.connect(addr1).aggregation(50000000, 0, { value: ethers.utils.parseEther('0.1') })
     res.wait()
 
     console.log(
@@ -135,7 +136,7 @@ describe('Racekingdom', function () {
 
     console.log("WAVAX balance of Contract1 ", await CheemsXYZContract.balanceOf(addr1.address))
     await CheemsXYZContract.connect(addr1).approve(NFTContract.address, "9999999999999999999")
-    await NFTContract.connect(addr1).borrow(6);
+    await NFTContract.connect(addr1).borrow(6,{ value: ethers.utils.parseEther('0.1') },);
 
     console.log("WAVAX balance of Contract2 ", await CheemsXYZContract.balanceOf(addr1.address))
 
@@ -145,7 +146,7 @@ describe('Racekingdom', function () {
     )
     await delay(15000);
     await CheemsXYZContract.connect(owner).approve(NFTContract.address, "9999999999999999999")
-    await NFTContract.connect(owner).redeemNFT(6, false);
+    await NFTContract.connect(owner).redeemNFT(6, false,{ value: ethers.utils.parseEther('0.1') });
 
     console.log("WAVAX balance of Contract3 ", await CheemsXYZContract.balanceOf(addr1.address))
     console.log(
@@ -155,6 +156,8 @@ describe('Racekingdom', function () {
 
     await NFTContract.connect(owner).transferFrom(owner.address, addr1.address, 6)
     console.log("WAVAX balance of Contract4 ", await CheemsXYZContract.balanceOf(addr1.address))
+
+    console.log("AVAX balacnce of treasury wallet ",await NFTContract.viewbalance("0xf827c3E5fD68e78aa092245D442398E12988901C"))
     // res = await NFTContract.connect(owner).upgradeNFTByAvax(3, 6, {
     //   value: ethers.utils.parseEther('75'),
     // })

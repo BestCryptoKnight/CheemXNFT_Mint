@@ -23,8 +23,8 @@
     "security": "scripts/security",
     "flatten": "scripts/flatten",
     "verify": "hardhat verify",
-    "deploy-bsc": "npx hardhat run --network bsc scripts/deploy_token.ts",
-    "deploy-bsc-bot": "npx hardhat run --network bsc scripts/deploy_bot.ts"
+    "deploy-avaxmain": "npx hardhat run --network avaxTest scripts/deploy_token.ts",
+    "deploy-avax": "npx hardhat run --network avaxTest scripts/deploy_bot.ts"
   },
   "files": [
     "dist/**/*",

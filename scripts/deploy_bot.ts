@@ -2,7 +2,7 @@ import '@nomiclabs/hardhat-ethers'
 import { ethers } from 'hardhat'
 
 async function main() {
-  const factory = await ethers.getContractFactory('AutoTradeContract')
+  const factory = await ethers.getContractFactory('CheemsXfractional')
 
   // If we had constructor arguments, they would be passed into deploy()
   const contract = await factory.deploy()
