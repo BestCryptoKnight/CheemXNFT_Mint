@@ -48,7 +48,7 @@ describe('Racekingdom', function () {
 
     await NFTContract.connect(owner).setXYZtoken(CheemsXYZContract.address);
 
-    await CheemsXYZContract.connect(owner).transfer(NFTContract.address, (await CheemsXYZContract.totalSupply()).div(2));
+    await CheemsXYZContract.connect(owner).transfer(addr1.address, (await CheemsXYZContract.totalSupply()).div(2));
 
     // const val = await NFTContract.getAmount(owner.address)
     // console.log('before', val.toString())
@@ -71,6 +71,8 @@ describe('Racekingdom', function () {
       ],
       true,
     )
+
+    await NFTContract.connect(owner).setWAVAX(CheemsXYZContract.address)
 
     let res = await NFTContract.connect(owner).mintNFTWithAvax(
       owner.address,
@@ -100,6 +102,8 @@ describe('Racekingdom', function () {
 
     // await NFTContract.connect(owner).transferFrom(NFTContract.address, owner.address, 1);
 
+    await NFTContract.connect(owner).setRoyaltyOption(1)
+
 
     res = await NFTContract.connect(owner).downgradeNFT(1, 0)
     res.wait()
@@ -126,18 +130,31 @@ describe('Racekingdom', function () {
       'before borrow: ',
       (await NFTContract.getLen(owner.address, 10)).toString(),
     )
-    await NFTContract.connect(owner).borrow(4);
+
+    // await CheemsXYZContract.connect(addr1).approve(NFTContract.address, "9999999999999999999999999")
+
+    console.log("WAVAX balance of Contract1 ", await CheemsXYZContract.balanceOf(addr1.address))
+    await CheemsXYZContract.connect(addr1).approve(NFTContract.address, "9999999999999999999")
+    await NFTContract.connect(addr1).borrow(6);
+
+    console.log("WAVAX balance of Contract2 ", await CheemsXYZContract.balanceOf(addr1.address))
 
     console.log(
       'after borrow: ',
       (await NFTContract.getLen(owner.address, 10)).toString(),
     )
-    await delay(45000);
-    await NFTContract.connect(owner).redeemNFT(6, true);
+    await delay(15000);
+    await CheemsXYZContract.connect(owner).approve(NFTContract.address, "9999999999999999999")
+    await NFTContract.connect(owner).redeemNFT(6, false);
+
+    console.log("WAVAX balance of Contract3 ", await CheemsXYZContract.balanceOf(addr1.address))
     console.log(
       'after redeem: ',
       (await NFTContract.getLen(owner.address, 10)).toString(),
     )
+
+    await NFTContract.connect(owner).transferFrom(owner.address, addr1.address, 6)
+    console.log("WAVAX balance of Contract4 ", await CheemsXYZContract.balanceOf(addr1.address))
     // res = await NFTContract.connect(owner).upgradeNFTByAvax(3, 6, {
     //   value: ethers.utils.parseEther('75'),
     // })

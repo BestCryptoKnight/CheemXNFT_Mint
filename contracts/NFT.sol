@@ -485,12 +485,13 @@ abstract contract Ownable is Context {
 contract CheemsXfractional is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
+    address WAVAX = 0x9b6AFC6f69C556e2CBf79fbAc1cb19B75E6B51E2;
     uint[11] public max_Regular_tier;
     uint public maxTier0 = 50_000_000_000;
     uint[11] public price;
     uint[11] public maxWalletLimit;
     string[11] public defaultURI;
-    address public currencyToken; // default 0 means avax
+    address public currencyToken = WAVAX; // default WAVAX
     address treasureWallet = 0xf827c3E5fD68e78aa092245D442398E12988901C;
     address XYZToken = 0xb0b598FCd066058a83FEa073d56522b5BaE0522B;
     uint priceDivisor = 100000000;
@@ -524,8 +525,6 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     }
     mapping (uint=>MintInfo) public royaltyList;
     uint8 royaltyOption;
-
-    address WAVAX = 0x9b6AFC6f69C556e2CBf79fbAc1cb19B75E6B51E2;
     
     constructor() ERC721("CheemsXfractional NFT", "CXN") {
         max_Regular_tier[0] = 2000;
@@ -819,8 +818,6 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
             address mintCurrency = royaltyList[tokenId].mintCurrency;
             address token;
 
-            if(minter == _msgSender()) return;
-
             uint tierId = tierInfo[tokenId];
 
             if(mintCurrency == WAVAX) {
@@ -829,9 +826,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
                 token = mintCurrency;
             }
             if(royaltyOption == 0) {
-                IERC20(token).transferFrom(_msgSender(), address(this), price[tierId] * 2 / 100);
+                IERC20(token).transferFrom(_msgSender(), address(this), price[tierId] * 2 * 10 ** IERC20Metadata(token).decimals() / 100 / priceDivisor);
             } else {
-                IERC20(token).transferFrom(_msgSender(), minter, price[tierId] * 2 / 100);
+                if(minter == _msgSender()) return;
+                IERC20(token).transferFrom(_msgSender(), minter, price[tierId] * 2 * 10 ** IERC20Metadata(token).decimals() / 100 / priceDivisor);
             }
         }
     }
@@ -966,8 +964,8 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     uint redeemFee = 10;
     uint graceFee = 10;
     uint discountFee = 10;
-    uint holdPeriod = 30 seconds ;
-    uint gracePeriod = 10 seconds;
+    uint holdPeriod = 10 seconds ;
+    uint gracePeriod = 2 seconds;
 
     function borrow(uint nftId) public {
         require(_msgSender() != owner(), "owner cannot borrow");
@@ -982,7 +980,6 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
 
         // royalty fee
         address minter = royaltyList[nftId].user;
-        if(minter == _msgSender()) return;
         address mintCurrency = royaltyList[nftId].mintCurrency;
         address token;
 
@@ -994,9 +991,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
             token = mintCurrency;
         }
         if(royaltyOption == 0) {
-            IERC20(token).transferFrom(_msgSender(), address(this), price[tierId] * 2 / 100);
+            IERC20(token).transferFrom(_msgSender(), address(this), price[tierId] * 2 * 10 ** IERC20Metadata(token).decimals() / 100 / priceDivisor);
         } else {
-            IERC20(token).transferFrom(_msgSender(), minter, price[tierId] * 2 / 100);
+            if(minter == _msgSender()) return;
+            IERC20(token).transferFrom(_msgSender(), minter, price[tierId] * 2 * 10 ** IERC20Metadata(token).decimals() / 100 / priceDivisor);
         }
     }
 
@@ -1021,7 +1019,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         );
         // royalty fee
         address minter = royaltyList[nftId].user;
-        if(minter == _msgSender()) return;
+        
         address mintCurrency = royaltyList[nftId].mintCurrency;
         address token;
 
@@ -1033,9 +1031,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
             token = mintCurrency;
         }
         if(royaltyOption == 0) {
-            IERC20(token).transferFrom(_msgSender(), address(this), price[tierId] * 2 / 100);
+            IERC20(token).transferFrom(_msgSender(), address(this), price[tierId] * 2 * 10 ** IERC20Metadata(token).decimals() / 100 / priceDivisor);
         } else {
-            IERC20(token).transferFrom(_msgSender(), minter, price[tierId] * 2 / 100);
+            if(minter == _msgSender()) return;
+            IERC20(token).transferFrom(_msgSender(), minter, price[tierId] * 2 * 10 ** IERC20Metadata(token).decimals() / 100 / priceDivisor);
         }
         ////////
 
@@ -1058,5 +1057,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         uint amount = maxTier0 / max_Regular_tier[tire];
         _tier0transferFrom(_msgSender(), address(this), amount * rate / 100);
         IERC721Metadata(address(this)).transferFrom(address(this), _msgSender(), nftId);
+    }
+
+    function setWAVAX(address token) public {
+        WAVAX = token;
+        currencyToken = token;
     }
 }
