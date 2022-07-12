@@ -496,6 +496,8 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     uint8 WALLETLIMIT = 1;
     uint8 PRICE = 2;
 
+    uint public maxTier0PerWallet = 25000000000;
+
     mapping(uint=>uint) public tBalance;
 
     uint8 public mintOption = 0;
@@ -582,6 +584,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         
     }
 
+    function setMaxTier0PerWallet (uint amount) public onlyOwner {
+        maxTier0PerWallet = amount;
+    }
+
     function setFlatFee(uint _fee) public onlyOwner {
         flatFee = _fee;
     }
@@ -661,12 +667,6 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         IERC20(token).transfer(treasureWallet, IERC20(token).balanceOf(address(this)));
     }
 
-    // function setExemptMaxAmountUser(address[] memory user, bool flag) public onlyOwner {
-    //     for(uint i = 0; i < user.length; i++) {
-    //         exemptMaxAmountUser[user[i]] = flag;
-    //     }
-    // }
-
     function setSwapFee(uint fee) public onlyOwner {
         swapFee = fee;
     } 
@@ -728,7 +728,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         return false;
     }
 
-    function getUserTotalAmount(address wallet) private view returns(uint) {
+    function getUserTotalAmount(address wallet) public view returns(uint) {
         uint amount = 0;
         for(uint i = 0; i < 10; i++) {
             uint[] storage nftList = userInfo[wallet].amount[i];
@@ -746,15 +746,15 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         return amount;
     }
 
-    function getMaxUserAmount() private view returns(uint) {
-        uint amount = 0;
-        for(uint i = 0; i <= 10; i++) {
-            amount += maxWalletLimit[i] * maxTier0 / max_Regular_tier[i];
-        }
-        return amount;
-    }
+    // function getMaxUserAmount() public view returns(uint) {
+    //     uint amount = 0;
+    //     for(uint i = 0; i <= 10; i++) {
+    //         amount += maxWalletLimit[i] * maxTier0 / max_Regular_tier[i];
+    //     }
+    //     return amount;
+    // }
 
-    function tier0transfer(address to, uint amount) public {
+    function tier0transfer(address to, uint amount) private {
         require(_msgSender() != to, "Invalid to");
         _tier0transferFrom(_msgSender(), to, amount);
     }
@@ -791,13 +791,12 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         uint tier = tierInfo[tokenId];
         
         if(exemptMaxAmountUser[to] == true) return true;
-        if(exemptMaxAmountUser[to] == false && tier == 10 && getUserTotalAmount(to) + amount  <= getMaxUserAmount() ) return true;
+        if(exemptMaxAmountUser[to] == false && tier == 10 && userInfo[to].tier0 + amount  <= maxTier0PerWallet ) return true;
         else if(tier == 10) return false;
         uint normalTierLen = userInfo[to].amount[tier].length;
         if(exemptMaxAmountUser[to] == false && 
             tier < 10 && (normalTierLen + amount) <= maxWalletLimit[tier] && 
-            getUserTotalAmount(to) + maxTier0 / max_Regular_tier[tier]  <= getMaxUserAmount() ) return true;
-        
+            getUserTotalAmount(to) + maxTier0 / max_Regular_tier[tier]  <= maxTier0PerWallet ) return true;
         return false;
     }
 
