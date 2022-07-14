@@ -628,12 +628,6 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         XYZToken = token;
     }
 
-    // function setWhiteList(address[] memory users, bool flag) public onlyOwner {
-    //     for(uint i = 0; i < users.length; i++) {
-    //         whiteList[users[i]] = flag;
-    //     }
-    // }
-
     function updateDefaultURI(uint tier, string memory uri) public onlyOwner {
         require(tier < 10, "invalid tier");
         defaultURI[tier] = uri;
@@ -672,18 +666,21 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     } 
 
     receive() external payable { }
-    function mintNFTWithAvax(address wallet, uint tie, string memory uri) public payable { 
+    function mintNFTWithAvax(address wallet, uint tie, string memory uri, uint _amount) public payable { 
+        if(_amount > 10) _amount = 10;
         require(currencyToken == WAVAX, "invalid Currency0");
-        uint amount = price[tie];
+        uint amount = price[tie] * _amount;
         if(currencyToken == WAVAX) {
             require(msg.value == amount * 10 ** 18 / priceDivisor + flatFee, "not eq value");
         } else {
             require(msg.value == flatFee, "not eq value");
             IERC20(currencyToken).transferFrom(_msgSender(), address(this), amount * 10 ** IERC20Metadata(currencyToken).decimals() / priceDivisor);
         }
-        uint tokenId = mintNFT(wallet, tie, uri);
-        royaltyList[tokenId].user = _msgSender();
-        royaltyList[tokenId].mintCurrency = WAVAX;
+        for(uint i = 0; i < _amount; i ++) {
+            uint tokenId = mintNFT(wallet, tie, uri);
+            royaltyList[tokenId].user = _msgSender();
+            royaltyList[tokenId].mintCurrency = WAVAX;
+        }
         payable(treasureWallet).transfer(address(this).balance);
     }
     
@@ -728,7 +725,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         return false;
     }
 
-    function getUserTotalAmount(address wallet) public view returns(uint) {
+    function getUserTotalAmount(address wallet) private view returns(uint) {
         uint amount = 0;
         for(uint i = 0; i < 10; i++) {
             uint[] storage nftList = userInfo[wallet].amount[i];
@@ -746,15 +743,15 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         return amount;
     }
 
-    // function getMaxUserAmount() public view returns(uint) {
-    //     uint amount = 0;
-    //     for(uint i = 0; i <= 10; i++) {
-    //         amount += maxWalletLimit[i] * maxTier0 / max_Regular_tier[i];
-    //     }
-    //     return amount;
-    // }
+    function getMaxUserAmount() private view returns(uint) {
+        uint amount = 0;
+        for(uint i = 0; i <= 10; i++) {
+            amount += maxWalletLimit[i] * maxTier0 / max_Regular_tier[i];
+        }
+        return amount;
+    }
 
-    function tier0transfer(address to, uint amount) private {
+    function tier0transfer(address to, uint amount) public {
         require(_msgSender() != to, "Invalid to");
         _tier0transferFrom(_msgSender(), to, amount);
     }
@@ -796,7 +793,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         uint normalTierLen = userInfo[to].amount[tier].length;
         if(exemptMaxAmountUser[to] == false && 
             tier < 10 && (normalTierLen + amount) <= maxWalletLimit[tier] && 
-            getUserTotalAmount(to) + maxTier0 / max_Regular_tier[tier]  <= maxTier0PerWallet ) return true;
+            getUserTotalAmount(to) + maxTier0 / max_Regular_tier[tier]  <= getMaxUserAmount() ) return true;
         return false;
     }
 
