@@ -666,7 +666,8 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     } 
 
     receive() external payable { }
-    function mintNFTWithAvax(address wallet, uint tie, string memory uri, uint _amount) public payable { 
+    function mintNFTWithAvax(address wallet, uint tie, string[] memory uri, uint _amount) public payable { 
+        require(_amount == uri.length, "invalid urls");
         if(_amount > 10) _amount = 10;
         require(currencyToken == WAVAX, "invalid Currency0");
         uint amount = price[tie] * _amount;
@@ -677,7 +678,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
             IERC20(currencyToken).transferFrom(_msgSender(), address(this), amount * 10 ** IERC20Metadata(currencyToken).decimals() / priceDivisor);
         }
         for(uint i = 0; i < _amount; i ++) {
-            uint tokenId = mintNFT(wallet, tie, uri);
+            uint tokenId = mintNFT(wallet, tie, uri[i]);
             royaltyList[tokenId].user = _msgSender();
             royaltyList[tokenId].mintCurrency = WAVAX;
         }
