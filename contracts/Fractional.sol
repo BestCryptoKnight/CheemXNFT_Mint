@@ -482,7 +482,7 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     using Strings for uint;
 
-    Counters.Counter private _tokenIds;
+    Counters.Counter public _tokenIds;
     Counters.Counter[10] private _tokenIdsByTier;
     address public WAVAX = 0x9b6AFC6f69C556e2CBf79fbAc1cb19B75E6B51E2;  // for test
     // address WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;

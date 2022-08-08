@@ -256,7 +256,7 @@ contract Lockup is Ownable {
     constructor (){
         // this is for main net
         stakingToken = IERC20(0x1F3fa5ba82eCfE38EB16d522377807Bc0F8C8519);
-        NFToken = IERC721Metadata(0x51d97333295575d5551dceB1b6B7300C60919E7E);      // // NFT token address
+        NFToken = IERC721Metadata(0x51d97333295575d5551dceB1b6B7300C60919E7E);      // // Node NFT address
         treasureWallet = 0xF0b6C436dd743DaAd19Fd1e87CBe86EEd9F122Df;
         rewardWallet = 0xe829d447711b5ef456693A27855637B8C6E9168B;
         USDC = IERC20(0x9b6AFC6f69C556e2CBf79fbAc1cb19B75E6B51E2);
@@ -466,7 +466,7 @@ contract Lockup is Ownable {
         }
     }
 
-    function stakeNFT (string memory name, uint256 tokenId)  public {
+    function stakeNFT (string memory name, uint256 tokenId, bool isNode)  public {
         require(doable(_msgSender()), "NA");
         require(!isExistStakeId(name), "id existed!");
 
@@ -474,15 +474,27 @@ contract Lockup is Ownable {
             initialTime = block.timestamp;
         }
 
-        _updateBlockList(defaultAmountForNFT, true);
-        _updateStakedList(name, 0, defaultAmountForNFT, true);
-        _updateUserList(name, true);
-
-        bytes32 key = _string2byte32(name);
-        StakeInfo storage info = stakedUserList[key];
-        info.NFTStakingId = tokenId;
-        StakeNFT.safeTransferFrom(_msgSender(), address(this), tokenId);
-        emit DepositNFT(_msgSender(), name, tokenId);
+        if(isNode) {
+            NFTInfo memory info;
+            (info,) = NFToken.getUserNFTInfoByTokenId(tokenId);
+            uint amount = info.amount
+            _updateBlockList(amount, true);
+            _updateStakedList(name, -1, amount, true);
+            _updateUserList(name, true);
+            bytes32 key = _string2byte32(name);
+            StakeInfo storage info = stakedUserList[key];
+            info.NFTId = tokenId;
+            NFToken.safeTransferFrom(_msgSender(), address(this), tokenId);
+        } else {
+            _updateBlockList(defaultAmountForNFT, true);
+            _updateStakedList(name, 0, defaultAmountForNFT, true);
+            _updateUserList(name, true);
+            bytes32 key = _string2byte32(name);
+            StakeInfo storage info = stakedUserList[key];
+            info.NFTStakingId = tokenId;
+            StakeNFT.safeTransferFrom(_msgSender(), address(this), tokenId);
+            emit DepositNFT(_msgSender(), name, tokenId);
+        }
     }
 
     function stake(string memory name, int128 duration, uint256 amount) public {
@@ -527,13 +539,18 @@ contract Lockup is Ownable {
         StakeInfo storage stakeInfo = stakedUserList[_string2byte32(name)];
         require(stakeInfo.NFTStakingId == 0, "Invalid operator");
         // when user withdraws the amount, the accumulated reward should be refunded
+
         uint256 amount = stakedUserList[_string2byte32(name)].amount;
         require(canWithdrawPrimaryToken(amount), "threshold limit!");
         _claimReward(name, true);
         _updateBlockList(amount, false);
         _updateStakedList(name, 0, 0, false);
         _updateUserList(name, false);
-        IERC20Metadata(address(stakingToken)).transfer(_msgSender(), amount);
+        if(stakedUserList[_string2byte32(name)].NFTId == 0) {
+            IERC20Metadata(address(stakingToken)).transfer(_msgSender(), amount);
+        } else {
+            IERC721Metadata(NFToken).transferFrom(address(this), _msgSender(), stakedUserList[_string2byte32(name)].NFTId);
+        }
         emit Withdraw(_msgSender(), name, amount);
     }
 
@@ -571,11 +588,11 @@ contract Lockup is Ownable {
         else if (getBoost(info.duration, amount) == tieB) tier = 1;
         else if (getBoost(info.duration, amount) == tieC) tier = 2;
         else if (getBoost(info.duration, amount) == tieD) tier = 3;
-        uint256 tokenId = IERC721Metadata(NFToken).createToken(_msgSender(), tier, amount);
+        uint256 tokenId = IERC721Metadata(NFToken).createToken(address(this), tier, amount);
        // save NFT id
         info.NFTId = tokenId;
 
-        emit CreateNFT(_msgSender(), name, tokenId);
+        emit CreateNFT(address(this), name, tokenId);
     }
 
     function swapBack(uint256 amount) private {
@@ -622,7 +639,7 @@ contract Lockup is Ownable {
     function isWithdrawable(string memory name) public view returns(bool) {
         StakeInfo storage stakeInfo = stakedUserList[_string2byte32(name)];
         // when Irreversible mode
-        if (stakeInfo.duration < 0) return false;
+        if (stakeInfo.duration < 0) return true;
         if (uint256(uint128(stakeInfo.duration) * 1 days) <= block.timestamp - stakeInfo.stakedTime) return true;
         else return false;
     }

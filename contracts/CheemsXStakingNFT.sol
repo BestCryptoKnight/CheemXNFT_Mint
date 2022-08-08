@@ -457,93 +457,51 @@ abstract contract Ownable is Context {
 
 }
 
-contract GuarantNFT is ERC721URIStorage, Ownable {
+contract CheemsXNFT is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
-    using Strings for uint;
-
     Counters.Counter private _tokenIds;
-    Counters.Counter[4] private _tokenIdsByTier;
-    string[4] classUri;
+    mapping(address=>uint256[]) public userInfo;
 
-    struct NFTInfo {
-        address user;
-        uint256 amount;
-        uint8 tie;
-        uint256 tokenId;
-    }
-
-    mapping(uint256=>NFTInfo) public NFTInfoList;
-    mapping(address=>uint256[]) public userInfoList;
-
-    constructor() ERC721("Guarant NFT", "GIR") {
+    constructor() ERC721("CheemsXNFT", "CXN") {
     }
     
-    function createToken(address recipient, uint8 tie, uint256 amount) public onlyOwner returns (uint256) {
-        require(tie < 4, "class tie should be less than 4");
+    function mintToken(address recipient, string memory uri) public onlyOwner returns (uint256) {
         _tokenIds.increment();
-        _tokenIdsByTier[tie].increment();
         uint256 newItemId = _tokenIds.current();
-        _mint(recipient, newItemId);
-        string memory tmp = string.concat(classUri[tie] ,_tokenIdsByTier[tie].current().toString());
-        string memory uri = string.concat(tmp, ".json");
+        _safeMint(recipient, newItemId);
         _setTokenURI(newItemId, uri);
-        NFTInfo storage info = NFTInfoList[newItemId];
-        info.amount = amount;
-        info.user = recipient;
-        info.tie = tie;
-        info.tokenId = newItemId;
-
-        uint256[] storage uInfo = userInfoList[recipient];
-        uInfo.push(newItemId);
-
+        userInfo[recipient].push(newItemId);
         return newItemId;
     }
 
-    function burnToken(address recipient, uint tie, uint256 tokenId) public onlyOwner  {
-        require(tie < 4, "class tie should be less than 4");
-        delete NFTInfoList[tokenId];
-        uint256[] storage tokenIdList = userInfoList[recipient];
-        for(uint256 i = 0; i < tokenIdList.length; i++) {
-            if(tokenId == tokenIdList[i]) {
-                tokenIdList[i] = tokenIdList[tokenIdList.length - 1];
-                tokenIdList.pop();
+    function safeTransferFrom(address from, address to, uint256 tokenId) public override {
+        super.safeTransferFrom(from, to, tokenId, "");
+        updateUserInfo(from, to, tokenId);
+    }
+
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public override {
+        super.safeTransferFrom(from, to, tokenId, _data);
+        updateUserInfo(from, to, tokenId);
+    }
+
+    function updateUserInfo(address from, address to, uint256 tokenId) private {
+        uint256 len = userInfo[from].length;
+        for(uint256 i = 0; i < len; i++){
+            if(userInfo[from][i] == tokenId) {
+                userInfo[from][i] = userInfo[from][len-1];
+                userInfo[from].pop();
                 break;
             }
         }
-        _burn(tokenId);
+        userInfo[to].push(tokenId);
     }
 
-    function changeDefaultUri(string memory uri, uint8 tie) public onlyOwner {
-        require(tie < 4, "class tie should be less than 4");
-        classUri[tie] = uri;
+    function transferFrom(address from, address to, uint256 tokenId) public override {
+        super.transferFrom(from, to, tokenId);
+        updateUserInfo(from, to, tokenId);
     }
 
-    function getUserNFTInfo(address user) public view returns(NFTInfo[] memory res, string[] memory uris) {
-        uint256[] memory tokenIdList = userInfoList[user];
-        res = new NFTInfo[](tokenIdList.length);
-        uris = new string[](tokenIdList.length);
-        for (uint256 i = 0; i < tokenIdList.length; i++) {
-            res[i] = NFTInfoList[tokenIdList[i]];
-            uris[i] = tokenURI(res[i].tokenId);
-        }
-        return (res, uris);
-    }
-
-    function getUserNFTInfoByTokenId(uint256 id) public view returns(NFTInfo memory res, string memory uri) {
-        res = NFTInfoList[id];
-        uri = tokenURI(id);
-        return (res, uri);
-    }
-
-    function getUserNFTInfoByTokenId(uint256[] memory id) public view returns(NFTInfo[] memory res, string[] memory uri) {
-        for(uint256 i = 0; i < id.length; i++) {
-            res[i] = NFTInfoList[id[i]];
-            uri[i] = tokenURI(id[i]);
-        }
-        return (res, uri);
-    }
-
-    function updateToken(uint256 tokenId, uint256 amount) public onlyOwner {
-        NFTInfoList[tokenId].amount = amount;
+    function getUserInfo (address user) public view returns(uint256[] memory) {
+        return userInfo[user];
     }
 }
