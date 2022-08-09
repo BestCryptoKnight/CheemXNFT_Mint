@@ -592,6 +592,10 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
         whiteList[_msgSender()] = true;
     }
 
+    function getTierInfo(uint tokenId) external view returns(uint) {
+        return tierInfo[tokenId];
+    }
+
     function setListOption(address[] memory list, bool flag, uint8 option) public onlyOwner {
         if(option == 1) {
             for (uint i = 0; i < list.length; i++) {
@@ -1077,8 +1081,8 @@ contract CheemsXfractional is ERC721URIStorage, Ownable {
     }
 
     function setBorrowConf(uint holdTime, uint graceTime, uint _borrowFee, uint _discount, uint _redeemFee, uint _graceFee) public onlyOwner{
-        holdPeriod = holdTime * 1 seconds;
-        gracePeriod = graceTime * 1 seconds;
+        holdPeriod = holdTime * 1 days;
+        gracePeriod = graceTime * 1 days;
         borrowFee = _borrowFee;
         discountFee = _discount;
         graceFee = _graceFee;

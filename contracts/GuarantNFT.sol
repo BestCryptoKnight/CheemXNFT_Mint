@@ -529,18 +529,37 @@ contract GuarantNFT is ERC721URIStorage, Ownable {
         return (res, uris);
     }
 
-    function getUserNFTInfoByTokenId(uint256 id) public view returns(NFTInfo memory res, string memory uri) {
-        res = NFTInfoList[id];
-        uri = tokenURI(id);
-        return (res, uri);
+    function safeTransferFrom(address from, address to, uint256 tokenId) public override {
+        super.safeTransferFrom(from, to, tokenId);
+        updateUserInfo(from, to, tokenId);
     }
 
-    function getUserNFTInfoByTokenId(uint256[] memory id) public view returns(NFTInfo[] memory res, string[] memory uri) {
-        for(uint256 i = 0; i < id.length; i++) {
-            res[i] = NFTInfoList[id[i]];
-            uri[i] = tokenURI(id[i]);
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public override {
+        super.safeTransferFrom(from, to, tokenId, _data);
+        updateUserInfo(from, to, tokenId);
+    }
+
+    function transferFrom(address from, address to, uint256 tokenId) public override {
+        super.transferFrom(from, to, tokenId);
+        updateUserInfo(from, to, tokenId);
+    }
+
+    function updateUserInfo(address from, address to, uint256 tokenId) private {
+        require(NFTInfoList[tokenId].user == from, "user is not owner");
+        uint256 len = userInfoList[from].length;
+        for(uint256 i = 0; i < len; i++){
+            if(userInfoList[from][i] == tokenId) {
+                userInfoList[from][i] = userInfoList[from][len-1];
+                userInfoList[from].pop();
+                break;
+            }
         }
-        return (res, uri);
+        userInfoList[to].push(tokenId);
+        NFTInfoList[tokenId].user = to;
+    }
+
+    function getUserNFTInfoByTokenId(uint256 id) public view returns(NFTInfo memory) {
+        return NFTInfoList[id];
     }
 
     function updateToken(uint256 tokenId, uint256 amount) public onlyOwner {
