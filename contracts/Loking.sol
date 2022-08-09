@@ -597,9 +597,9 @@ contract Lockup is Ownable {
     function getBoost(int128 duration, uint256 amount) internal view returns (uint8) {
         if(duration < 0 && amount < 100 * 10 ** 6 * 10 ** 18) return 0;
         else if (duration < 0 && amount < 500 * 10 ** 6 * 10 ** 18  && amount >= 100 * 10 ** 6 * 10 ** 18) return tieA;      // irreversable
-        else if (duration < 0 && amount <= 1000 * 10 ** 6 * 10 ** 18) return tieB;      // irreversable
-        else if (duration < 0 && amount <= 5000 * 10 ** 6 * 10 ** 18) return tieC;      // irreversable
-        else if (duration < 0 && amount > 5000 * 10 ** 6 * 10 ** 18) return tieD;      // irreversable
+        else if (duration < 0 && amount < 1000 * 10 ** 6 * 10 ** 18) return tieB;      // irreversable
+        else if (duration < 0 && amount < 5000 * 10 ** 6 * 10 ** 18) return tieC;      // irreversable
+        else if (duration < 0 && amount >= 5000 * 10 ** 6 * 10 ** 18) return tieD;      // irreversable
         else if (duration < 30) return unLockBoost;   // no lock
         else if (duration < 90) return month1;   // more than 1 month
         else if (duration < 180) return month3;   // more than 3 month
